@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<!--
+  SETUP: repo should be named  credit-default  on github.com/craigouma
+  PDF filename:                credit_default_shap.pdf
+  Replace YOUR_SCHOLAR_ID with your actual Google Scholar profile ID
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Google Scholar indexing -->
+  <meta name="citation_title"
+        content="Explainable Credit Default Prediction for Microfinance: A Gradient Boosting and SHAP Study on Consumer Credit Data">
+  <meta name="citation_author"       content="Ouma, Craig Carlos">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_online_date"      content="2026/06/16">
+  <meta name="citation_language"     content="en">
+  <meta name="citation_abstract_html_url"
+        content="https://craigouma.github.io/credit-default/">
+  <meta name="citation_pdf_url"
+        content="https://craigouma.github.io/credit-default/credit_default_shap.pdf">
+  <meta name="citation_keywords"
+        content="credit scoring; default prediction; SHAP; LightGBM; XGBoost; explainability; microfinance; East Africa">
+
+  <!-- Open Graph -->
+  <meta property="og:title"
+        content="Explainable Credit Default Prediction — Craig Carlos Ouma">
+  <meta property="og:description"
+        content="Three classifiers on 150,000 borrowers. SHAP reveals revolving utilisation and delinquency history dominate. All models calibrate poorly — a finding with direct deployment implications.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://craigouma.github.io/credit-default/">
+
+  <title>Explainable Credit Default Prediction — Craig Carlos Ouma</title>
+
+  <style>
+    :root {
+      --navy:    #1A3A5C;
+      --blue:    #2563EB;
+      --blue-lt: #EFF6FF;
+      --green:   #065F46;
+      --green-lt:#ECFDF5;
+      --amber:   #92400E;
+      --amber-lt:#FEF3C7;
+      --bg:      #FFFFFF;
+      --bg-alt:  #F4F8FC;
+      --border:  #CBD8E6;
+      --text:    #1E2D3D;
+      --muted:   #566B7E;
+      --code-bg: #111827;
+      --code-txt:#93C5FD;
+      --serif: 'Palatino Linotype','Book Antiqua',Palatino,Georgia,serif;
+      --sans:  system-ui,-apple-system,'Segoe UI',sans-serif;
+      --mono:  'Courier New',Courier,monospace;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{font-family:var(--sans);background:var(--bg);color:var(--text);
+         line-height:1.65;font-size:16px}
+    .page{max-width:740px;margin:0 auto;padding:0 24px 80px}
+
+    /* Risk-curve header — S-curve signature element */
+    .wave-header{width:100%;height:56px;margin-bottom:36px;overflow:hidden}
+    .wave-header svg{width:100%;height:56px;display:block}
+
+    /* Badges */
+    .badge-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+    .badge{font-family:var(--mono);font-size:11px;font-weight:700;
+           letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;
+           border-radius:3px;background:#DBEAFE;color:#1D4ED8}
+    .badge.expl{background:var(--green-lt);color:var(--green)}
+    .badge.fin {background:var(--amber-lt);color:var(--amber)}
+    .pub-date{font-size:13px;color:var(--muted);font-family:var(--mono)}
+
+    h1{font-family:var(--serif);font-size:clamp(22px,4vw,30px);font-weight:700;
+       line-height:1.25;color:var(--navy);margin-bottom:20px;letter-spacing:-.01em}
+
+    .author-block{margin-bottom:28px}
+    .author-name{font-size:16px;font-weight:600;color:var(--text)}
+    .affil{font-size:13.5px;color:var(--muted);margin-top:2px}
+
+    /* Stats */
+    .stats{display:flex;border:1px solid var(--border);border-radius:8px;
+           overflow:hidden;margin-bottom:32px}
+    .stat{flex:1;text-align:center;padding:16px 10px;
+          border-right:1px solid var(--border);background:var(--bg-alt)}
+    .stat:last-child{border-right:none}
+    .stat-value{font-family:var(--serif);font-size:24px;font-weight:700;
+                color:var(--navy);line-height:1;display:block}
+    .stat-label{font-size:10.5px;color:var(--muted);text-transform:uppercase;
+                letter-spacing:.07em;margin-top:5px;display:block}
+
+    /* Buttons */
+    .btn-row{display:flex;gap:12px;margin-bottom:36px;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:7px;text-decoration:none;
+         font-size:14px;font-weight:600;padding:10px 22px;border-radius:6px;
+         transition:opacity .15s,transform .1s;white-space:nowrap}
+    .btn:hover{opacity:.88;transform:translateY(-1px)}
+    .btn-primary{background:var(--navy);color:#fff}
+    .btn-ghost{background:transparent;color:var(--navy);border:1.5px solid var(--border)}
+
+    .section-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+                   text-transform:uppercase;color:var(--blue);font-weight:700;
+                   margin-bottom:10px}
+
+    /* Abstract */
+    .abstract-box{background:var(--blue-lt);border-left:3px solid var(--blue);
+                  border-radius:0 6px 6px 0;padding:22px 26px;margin-bottom:36px}
+    .abstract-box p{font-family:var(--serif);font-size:15.5px;
+                    line-height:1.75;color:var(--text)}
+
+    /* Key finding callout */
+    .callout{background:var(--amber-lt);border-left:3px solid #D97706;
+             border-radius:0 6px 6px 0;padding:16px 20px;margin-bottom:32px}
+    .callout p{font-family:var(--serif);font-size:15px;color:var(--amber)}
+    .callout strong{color:#78350F}
+
+    hr{border:none;border-top:1px solid var(--border);margin:32px 0}
+
+    /* Figures grid */
+    .figures{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:36px}
+    .fig-card{border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--bg-alt)}
+    .fig-card img{width:100%;height:auto;display:block}
+    .fig-cap{font-size:12px;color:var(--muted);padding:8px 12px;
+             border-top:1px solid var(--border);font-family:var(--mono)}
+    .fig-full{grid-column:1/-1}
+
+    /* Results table */
+    .results-table{width:100%;border-collapse:collapse;margin-bottom:32px;font-size:14px}
+    .results-table th{background:var(--navy);color:#fff;padding:10px 14px;
+                      text-align:left;font-weight:600;font-family:var(--mono);
+                      font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+    .results-table td{padding:9px 14px;border-bottom:1px solid var(--border)}
+    .results-table tr:last-child td{border-bottom:none}
+    .results-table tr:nth-child(even) td{background:var(--bg-alt)}
+    .results-table .best{font-weight:700;color:var(--navy)}
+
+    /* Keywords */
+    .keywords{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+    .kw{font-size:12.5px;padding:4px 11px;border:1px solid var(--border);
+        border-radius:99px;color:var(--muted);background:var(--bg-alt)}
+
+    /* BibTeX */
+    .bibtex-wrap{background:var(--code-bg);border-radius:8px;overflow:hidden;margin-bottom:36px}
+    .bibtex-bar{display:flex;justify-content:space-between;align-items:center;
+                padding:10px 16px;background:#1F2937}
+    .bibtex-bar span{font-family:var(--mono);font-size:11px;color:#9CA3AF;
+                     letter-spacing:.06em;text-transform:uppercase}
+    .copy-btn{font-family:var(--mono);font-size:11px;background:#374151;
+              color:#D1D5DB;border:none;padding:4px 12px;border-radius:4px;
+              cursor:pointer;transition:background .15s}
+    .copy-btn:hover{background:#4B5563}
+    pre.bibtex{font-family:var(--mono);font-size:12.5px;color:var(--code-txt);
+               line-height:1.7;padding:20px 20px 24px;overflow-x:auto}
+
+    /* Links */
+    .links-row{display:flex;gap:14px;flex-wrap:wrap}
+    .link-card{display:flex;align-items:center;gap:10px;text-decoration:none;
+               color:var(--text);font-size:14px;font-weight:500;padding:12px 18px;
+               border:1px solid var(--border);border-radius:8px;background:var(--bg-alt);
+               transition:border-color .15s,background .15s}
+    .link-card:hover{border-color:var(--blue);background:var(--blue-lt)}
+
+    footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--border);
+           font-size:12.5px;color:var(--muted);font-family:var(--mono)}
+
+    @media(max-width:560px){
+      .stats{flex-direction:column}
+      .stat{border-right:none;border-bottom:1px solid var(--border)}
+      .stat:last-child{border-bottom:none}
+      .figures{grid-template-columns:1fr}
+      .btn-row{flex-direction:column}
+      .btn{justify-content:center}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Risk-score S-curve signature element -->
+  <div class="wave-header" aria-hidden="true">
+    <svg viewBox="0 0 740 56" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- baseline grid lines (faint) -->
+      <line x1="0" y1="28" x2="740" y2="28" stroke="#1A3A5C" stroke-width="0.5" opacity="0.1"/>
+      <!-- S-curve: low risk left → high risk right (logistic shape) -->
+      <path d="M0,48 C60,47 100,46 160,44 C220,42 260,38 310,30
+               C360,22 400,14 460,10 C520,7 580,6 640,5 L740,5"
+            fill="none" stroke="#1A3A5C" stroke-width="1.5"
+            stroke-linecap="round" opacity="0.18"/>
+      <!-- highlighted inflection zone (0.3–0.7 utilisation risk jump) -->
+      <path d="M280,35 C310,30 340,22 370,16"
+            fill="none" stroke="#2563EB" stroke-width="2.5"
+            stroke-linecap="round" opacity="0.65"/>
+      <!-- vertical threshold marker -->
+      <line x1="325" y1="14" x2="325" y2="44"
+            stroke="#B91C1C" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <!-- Badges -->
+  <div class="badge-row">
+    <span class="badge">Preprint</span>
+    <span class="badge expl">SHAP Explainability</span>
+    <span class="badge fin">Microfinance</span>
+    <span class="pub-date">June 2026</span>
+  </div>
+
+  <!-- Title -->
+  <h1>Explainable Credit Default Prediction
+      for Microfinance: A Gradient Boosting
+      and SHAP Study on Consumer Credit Data</h1>
+
+  <!-- Author -->
+  <div class="author-block">
+    <div class="author-name">Craig Carlos Ouma</div>
+    <div class="affil">Independent Researcher &nbsp;·&nbsp;
+      <a href="mailto:craigcarlos95@gmail.com"
+         style="color:var(--blue);text-decoration:none">craigcarlos95@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-value">150,000</span>
+      <span class="stat-label">Borrowers</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">0.868</span>
+      <span class="stat-label">Best AUROC</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">0.735</span>
+      <span class="stat-label">Gini coefficient</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">6.68%</span>
+      <span class="stat-label">Default rate</span>
+    </div>
+  </div>
+
+  <!-- Key finding -->
+  <div class="callout">
+    <p><strong>Key finding:</strong> Revolving credit utilisation (mean |SHAP| = 0.198)
+    and maximum prior delinquency status (0.131) together account for the bulk of
+    predictive signal — consistent with credit bureau practice and providing
+    face-validity for the model. All three tree models are poorly calibrated;
+    raw probabilities should not be used directly as default-rate thresholds
+    without recalibration.</p>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <a class="btn btn-primary" href="credit_default_shap.pdf"
+       target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Download PDF
+    </a>
+    <a class="btn btn-ghost" href="https://github.com/craigouma/credit-default"
+       target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.38.6.11.82-.26.82-.58
+                 0-.28-.01-1.02-.01-2-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75
+                 -1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1
+                 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22
+                 -.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01
+                 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84
+                 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6
+                 -.01 2.9-.01 3.29 0 .32.21.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+      </svg>
+      Code &amp; Notebook
+    </a>
+    <a class="btn btn-ghost"
+       href="https://www.kaggle.com/datasets/brycecf/give-me-some-credit-dataset"
+       target="_blank" rel="noopener">Dataset</a>
+  </div>
+
+  <!-- Abstract -->
+  <div class="section-label">Abstract</div>
+  <div class="abstract-box">
+    <p>Credit scoring models underpin lending decisions for millions of borrowers,
+    yet in many microfinance settings they operate as black boxes — lenders know
+    the score but not the story behind it. This paper trains and compares three
+    classifiers (Logistic Regression, XGBoost, and LightGBM) on the Give Me Some
+    Credit consumer credit dataset (150,000 borrowers, 6.68% default rate) and
+    applies SHAP (SHapley Additive exPlanations) to make the best-performing
+    model's decisions transparent. All three classifiers perform within a narrow
+    AUROC band of 0.862–0.868, with XGBoost leading marginally. The SHAP analysis
+    reveals that revolving credit utilisation and maximum delinquency status
+    together drive the bulk of predictive signal — consistent with established
+    credit theory. Younger borrowers and those with lower incomes face
+    systematically higher predicted default risk, while revolving utilisation
+    shows a notable threshold effect near 0.5. We also find that all three tree
+    models are poorly calibrated, with direct implications for threshold-based
+    lending decisions. These results support SHAP-augmented gradient boosting
+    as a practical, explainable credit scoring framework for microfinance lenders
+    operating under regulatory transparency requirements.</p>
+  </div>
+
+  <hr>
+
+  <!-- Results table -->
+  <div class="section-label">Model Comparison</div>
+  <table class="results-table">
+    <thead>
+      <tr><th>Model</th><th>AUROC</th><th>Gini</th><th>KS</th><th>AUPRC</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="best">XGBoost</td>
+        <td class="best">0.8677</td>
+        <td class="best">0.7354</td>
+        <td class="best">0.5806</td>
+        <td class="best">0.3979</td>
+      </tr>
+      <tr>
+        <td>LightGBM</td><td>0.8634</td><td>0.7269</td><td>0.5783</td><td>0.3767</td>
+      </tr>
+      <tr>
+        <td>Logistic Regression</td><td>0.8620</td><td>0.7239</td><td>0.5724</td><td>0.3881</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:13px;color:var(--muted);margin-bottom:32px">
+    All three models are within 0.006 AUROC of each other —
+    Logistic Regression trails XGBoost by only 0.006, suggesting lenders who
+    prioritise interpretability can choose the linear model without material
+    loss in discriminative power.
+  </p>
+
+  <!-- Figures -->
+  <div class="section-label">Key Figures</div>
+  <div class="figures">
+    <div class="fig-card fig-full">
+      <img src="fig_shap_beeswarm.png" alt="SHAP beeswarm">
+      <div class="fig-cap">SHAP beeswarm — feature direction and magnitude. High revolving utilisation and any prior delinquency push predictions towards default.</div>
+    </div>
+    <div class="fig-card">
+      <img src="fig_shap_bar.png" alt="SHAP bar">
+      <div class="fig-cap">Mean |SHAP| — global feature importance</div>
+    </div>
+    <div class="fig-card">
+      <img src="fig_roc_pr.png" alt="ROC and PR curves">
+      <div class="fig-cap">ROC and precision–recall curves</div>
+    </div>
+    <div class="fig-card fig-full">
+      <img src="fig_shap_dependence.png" alt="SHAP dependence plots">
+      <div class="fig-cap">SHAP dependence plots for the top 3 features. Revolving utilisation shows a threshold effect near 0.5; the jump from zero to one prior delinquency carries the largest single risk increment.</div>
+    </div>
+    <div class="fig-card">
+      <img src="fig_calibration.png" alt="Calibration curves">
+      <div class="fig-cap">Calibration — all tree models deviate substantially from perfect. Platt scaling recommended before deployment.</div>
+    </div>
+    <div class="fig-card">
+      <img src="fig_eda.png" alt="EDA">
+      <div class="fig-cap">Class distribution and missing value summary</div>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- Keywords -->
+  <div class="section-label">Keywords</div>
+  <div class="keywords">
+    <span class="kw">Credit scoring</span>
+    <span class="kw">Default prediction</span>
+    <span class="kw">SHAP explainability</span>
+    <span class="kw">LightGBM</span>
+    <span class="kw">XGBoost</span>
+    <span class="kw">Microfinance</span>
+    <span class="kw">East Africa</span>
+    <span class="kw">Gini coefficient</span>
+    <span class="kw">KS statistic</span>
+    <span class="kw">Model calibration</span>
+    <span class="kw">Fair lending</span>
+  </div>
+
+  <hr>
+
+  <!-- BibTeX -->
+  <div class="section-label">Cite this work</div>
+  <div class="bibtex-wrap">
+    <div class="bibtex-bar">
+      <span>BibTeX</span>
+      <button class="copy-btn" onclick="copyBib(this)">Copy</button>
+    </div>
+    <pre class="bibtex" id="bibtex-block">@misc{ouma2026credit,
+  title   = {Explainable Credit Default Prediction for
+             Microfinance: {A} Gradient Boosting and
+             {SHAP} Study on Consumer Credit Data},
+  author  = {Ouma, Craig Carlos},
+  year    = {2026},
+  month   = {June},
+  note    = {Preprint},
+  url     = {https://craigouma.github.io/credit-default/}
+}</pre>
+  </div>
+
+  <!-- Links -->
+  <div class="section-label">Links</div>
+  <div class="links-row">
+    <a class="link-card"
+       href="#"
+       target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <circle cx="24" cy="24" r="20" fill="#4285F4"/>
+        <text x="24" y="31" text-anchor="middle" font-size="22"
+              font-weight="bold" fill="white" font-family="Georgia,serif">S</text>
+      </svg>
+      Google Scholar
+    </a>
+    <a class="link-card" href="https://github.com/craigouma"
+       target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 .5C5.37.5 0 5.87 0 12.5c0 5.3 3.44 9.8 8.21 11.38.6.11.82-.26.82-.58
+                 0-.28-.01-1.02-.01-2-3.34.73-4.04-1.61-4.04-1.61-.54-1.38-1.33-1.75-1.33-1.75
+                 -1.09-.74.08-.73.08-.73 1.2.08 1.84 1.24 1.84 1.24 1.07 1.83 2.8 1.3 3.49 1
+                 .11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22
+                 -.13-.3-.54-1.52.12-3.18 0 0 1.01-.32 3.3 1.23a11.5 11.5 0 0 1 3-.4c1.02.01
+                 2.04.14 3 .4 2.28-1.55 3.29-1.23 3.29-1.23.66 1.66.25 2.88.12 3.18.77.84
+                 1.24 1.91 1.24 3.22 0 4.61-2.81 5.63-5.48 5.92.43.37.81 1.1.81 2.22 0 1.6
+                 -.01 2.9-.01 3.29 0 .32.21.7.82.58A12 12 0 0 0 24 12.5C24 5.87 18.63.5 12 .5z"/>
+      </svg>
+      GitHub
+    </a>
+    <a class="link-card" href="https://craigouma.github.io/neonatal-paper/"
+       target="_blank" rel="noopener">📄 Neonatal Early Warning</a>
+    <a class="link-card" href="https://craigouma.github.io/ptbxl-ecg-paper/"
+       target="_blank" rel="noopener">📄 ECG Classification</a>
+  </div>
+
+  <footer>
+    Craig Carlos Ouma &nbsp;·&nbsp; Independent Researcher &nbsp;·&nbsp; 2026
+    &nbsp;·&nbsp; Dataset: Give Me Some Credit (TransUnion / Kaggle)
+  </footer>
+
+</div>
+
+<script>
+  function copyBib(btn) {
+    navigator.clipboard.writeText(
+      document.getElementById('bibtex-block').textContent
+    ).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+  }
+</script>
+</body>
+</html>

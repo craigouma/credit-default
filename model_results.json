@@ -1,0 +1,20 @@
+{
+  "Logistic Regression": {
+    "AUROC": 0.862,
+    "Gini": 0.7239,
+    "KS": 0.5724,
+    "AUPRC": 0.3881
+  },
+  "XGBoost": {
+    "AUROC": 0.8677,
+    "Gini": 0.7354,
+    "KS": 0.5806,
+    "AUPRC": 0.3979
+  },
+  "LightGBM": {
+    "AUROC": 0.8634,
+    "Gini": 0.7269,
+    "KS": 0.5783,
+    "AUPRC": 0.3767
+  }
+}
